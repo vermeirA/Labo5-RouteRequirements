@@ -1,0 +1,74 @@
+Understanding routesegments and their behavior
+
+
+_RouteSegments:  AB      BC      CD      DE      EF      FG
+                 |       |       |       |       |       |
+                 |-------|-------|-------|-------|-------|
+                 10      15      20      22      25      30 
+
+
+
+Inserting Q with distance 5 after D
+
+
+
+
+_RouteSegments:  AB      BC      CD      DQ      QE      EF      FG
+                 |       |       |       |       |       |	 |
+                 |-------|-------|-------|-------|-------|-------|
+                 10      15      20      5       17      25      30 
+
+
+
+Removing C 
+
+
+
+_RouteSegments:  AB      BD      DQ      QE      EF      FG
+                 |       |       |       |       |       |	 
+                 |-------|-------|-------|-------|-------|
+                 10      35      5       17	 25      30
+
+
+
+Removing G
+
+_RouteSegments:  AB      BD      DQ      QE      EF
+                 |       |       |       |       |       	 
+                 |-------|-------|-------|-------|
+                 10      35      5       17	 25
+
+
+
+Removing A
+
+_RouteSegments:  BD      DQ      QE      EF
+                 |       |       |       |       	 
+                 |-------|-------|-------|
+                 35      5       17	 25       
+
+
+
+		 AB      BC      CD      DE
+                 |       |       |       |
+                 |-------|-------|-------|
+                 10      15      20      22 
+
+
+
+
+AB
+|
+|
+10
+
+Insert Q with distance 5 between A and B
+
+AQ	QB
+|	|
+|-------|
+5	5
+
+
+
+startlocation distance locnext distance locnext distance locend
