@@ -22,17 +22,7 @@ namespace RouteRequirements.Model
             }
 
             LocationSegment previousLocation = _routeSegments[_routeSegments.Count - 1].LocEnd;
-            LocationSegment addLocation = new LocationSegment(location, isStop);
-
-            if (!string.IsNullOrEmpty(previousLocation.Name))
-            {
-                previousLocation.Name = char.ToUpper(previousLocation.Name[0]) + previousLocation.Name.Substring(1);
-            }
-
-            if (!string.IsNullOrEmpty(addLocation.Name))
-            {
-                addLocation.Name = char.ToUpper(addLocation.Name[0]) + addLocation.Name.Substring(1);
-            }
+            LocationSegment addLocation = new LocationSegment(location, isStop);          
 
             _routeSegments.Add(new RouteSegment(previousLocation, addLocation, distance));
         }
@@ -48,11 +38,10 @@ namespace RouteRequirements.Model
             // checken of startlocatie voor eindlocatie ligt
             int indexStart = _routeSegments.FindIndex(loc => loc.LocStart.Name == startLocation);
             int indexEnd = _routeSegments.FindIndex(loc => loc.LocEnd.Name == endLocation);
-            int indexFirst = _routeSegments.FindIndex(loc => loc.LocStart.Name == endLocation); //voor edge case
             double distance = 0;
 
             //check of ze bestaan
-            if (indexStart == -1 || indexFirst == -1) 
+            if (indexStart == -1 || indexEnd == -1) 
             {
                 throw new RouteException("GetDistance - One or more locations do(es) not exist.");
             }
@@ -61,11 +50,8 @@ namespace RouteRequirements.Model
             {
                 throw new RouteException("GetDistance - Locations not succesive.");
 
-            } else if (indexEnd == indexStart)
-            {
-                distance = _routeSegments[indexStart].Distance;
-
-            } else
+            } 
+            else
             {
                 for (int i = indexStart; i <= indexEnd; i++)
                 {
@@ -118,8 +104,7 @@ namespace RouteRequirements.Model
 
             //nieuw segment maken en updaten
             LocationSegment insertStartLoc = new LocationSegment(location, isStop);
-            LocationSegment insertEndLoc = new LocationSegment(_routeSegments[fromIndex].LocEnd.Name, _routeSegments[fromIndex].LocEnd.IsStop);
-            RouteSegment insertSegment = new RouteSegment(insertStartLoc, insertEndLoc, updatedDistanceNext);
+            RouteSegment insertSegment = new RouteSegment(insertStartLoc, _routeSegments[fromIndex].LocEnd, updatedDistanceNext);
             _routeSegments.Insert(fromIndex + 1, insertSegment);
 
             //bestaand segment updaten
@@ -180,17 +165,9 @@ namespace RouteRequirements.Model
         public (string start, List<(double distance, string location)>) ShowFullRoute()
         {
             string startLocation = _routeSegments[0].LocStart.Name;
+            string endLocation = _routeSegments[_routeSegments.Count - 1].LocEnd.Name;
 
-            List<(double distance, string location)> fullRoute = new List<(double distance, string location)>();
-
-            for (int i = 0; i < _routeSegments.Count; i++)
-            {
-                //distance van segment ophalen en toevoegen samen met de volgende locatienaam 
-                double distance = _routeSegments[i].Distance;
-                fullRoute.Add((distance, _routeSegments[i].LocEnd.Name));
-            }
-
-            return (startLocation, fullRoute);
+            return ShowFullRoute(startLocation, endLocation);
         }
 
         public (string start, List<(double distance, string location)>) ShowFullRoute(string startLocation, string endLocation)
@@ -207,6 +184,11 @@ namespace RouteRequirements.Model
             if (endIndex < startIndex)
             {
                 throw new RouteException("ShowFullRoute - End location must come after start location.");
+            }
+
+            if ((!_routeSegments[startIndex].LocStart.IsStop) || (!_routeSegments[endIndex].LocEnd.IsStop))
+            {
+                throw new RouteException("ShowRoute - Start and endlocation must be a stoplocation.");
             }
 
             List<(double distance, string location)> fullRoute = new List<(double distance, string location)>();
@@ -239,23 +221,9 @@ namespace RouteRequirements.Model
             // startLocatie is sowieso een Stop
 
             string startLocation = _routeSegments[0].LocStart.Name;
-            double accumulatedDistance = 0;
+            string endLocation = _routeSegments[_routeSegments.Count - 1].LocEnd.Name;
 
-            List<(double distance, string location)> stopLocations = new List<(double distance, string location)>();
-
-            //enkel stoplocaties tonen, maar eerst de distance van de niet-stoplocaties bij de (respectievelijke) vorige wel-stop tellen
-            for (int i = 0; i < _routeSegments.Count; i++)
-            {
-                accumulatedDistance += _routeSegments[i].Distance;
-
-                if (_routeSegments[i].LocEnd.IsStop)
-                {
-                    stopLocations.Add((accumulatedDistance, _routeSegments[i].LocEnd.Name));
-                    accumulatedDistance = 0;
-                }
-            }
-           
-            return (startLocation, stopLocations);
+           return ShowRoute(startLocation, endLocation);
         }
 
         public (string start, List<(double distance, string location)>) ShowRoute(string startLocation, string endLocation)
@@ -271,6 +239,11 @@ namespace RouteRequirements.Model
             if (endIndex < startIndex)
             {
                 throw new RouteException("ShowRoute - End location must come after start location.");
+            }
+
+            if ((!_routeSegments[startIndex].LocStart.IsStop) || (!_routeSegments[endIndex].LocEnd.IsStop)) 
+            {
+                throw new RouteException("ShowRoute - Start and endlocation must be a stoplocation.");
             }
 
             List<(double distance, string location)> stopLocations = new List<(double distance, string location)>();

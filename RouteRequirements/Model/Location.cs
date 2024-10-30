@@ -20,6 +20,12 @@ namespace RouteRequirements.Model
 				{
 					throw new RouteException("The name of the location cannot be blank or null.");
 				}
+
+				if (!char.IsUpper(value[0]))
+				{
+					throw new RouteException("The name of the location must start with a capital letter.");
+				}
+
 				_name = value;
 			}
 		}

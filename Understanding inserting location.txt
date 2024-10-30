@@ -49,10 +49,12 @@ _RouteSegments:  BD      DQ      QE      EF
 
 
 
+InitializeRoute()
+
 		 AB      BC      CD      DE
                  |       |       |       |
                  |-------|-------|-------|
-                 10      15      20      22 
+                 10      15      12      18 
 
 
 

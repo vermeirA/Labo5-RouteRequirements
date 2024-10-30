@@ -3,6 +3,7 @@ using RouteRequirements.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -25,11 +26,11 @@ namespace RouteRequirements
             using (StreamReader sr = new StreamReader(fileName))
             {
                 string line;
-
-                while ((line = sr.ReadLine()) != null)
+                try
                 {
-                    try
+                    while ((line = sr.ReadLine()) != null)
                     {
+                    
                         // Regex patterns voor verschillende formats
                         string pattern1 = @"^(.+?),(\d+),(true|false)$"; // Format: Location,Distance,IsStop
                         string pattern2 = @"^(.+?)\((stop|transit)\),(.+?)\((stop|transit)\),(\d+)$"; // Format: StartLocation(stop|transit),EndLocation(stop|transit),Distance
@@ -40,10 +41,10 @@ namespace RouteRequirements
                         if (match1.Success)
                         {
                             string location = match1.Groups[1].Value;
-                            if (!string.IsNullOrEmpty(location))
+                            if (string.IsNullOrEmpty(location))
                             {
-                                location = char.ToUpper(location[0]) + location.Substring(1);
-                            } 
+                                throw new RouteException($"Invalid location format in this line: {line}");
+                            }
 
                             if (!double.TryParse(match1.Groups[2].Value, out double distance))
                             {
@@ -67,23 +68,49 @@ namespace RouteRequirements
                             string startLocation = match2.Groups[1].Value;
                             string endLocation = match2.Groups[3].Value;
 
-                            if (!string.IsNullOrEmpty(startLocation))
+                            if (string.IsNullOrEmpty(startLocation) || string.IsNullOrEmpty(endLocation))
                             {
-                                startLocation = char.ToUpper(startLocation[0]) + startLocation.Substring(1);
-                            }
-
-                            if (!string.IsNullOrEmpty(endLocation))
-                            {
-                                endLocation = char.ToUpper(endLocation[0]) + endLocation.Substring(1);
+                                throw new RouteException($"Invalid location format in this line: {line}");
                             }
 
                             if (!double.TryParse(match2.Groups[5].Value, out double distance))
                             {
-                                throw new RouteException("Invalid distance format.");
+                                throw new RouteException($"Invalid distance format in this line: {line}");
                             }
 
-                            bool isStartStop = match2.Groups[2].Value == "stop";
-                            bool isEndStop = match2.Groups[4].Value == "stop";
+                            //stops eerste locatie
+                            bool isStartStop;
+                            
+                            switch (match2.Groups[2].Value)
+                            {
+                                case ("stop"):
+                                    isStartStop = true;
+                                    break;
+
+                                case ("transit"):
+                                    isStartStop = false;
+                                    break;
+                              
+                                default:
+                                    throw new RouteException("Unexpected value: " + match2.Groups[2].Value);
+                            }
+
+                            //stops tweede locatie
+                            bool isEndStop;
+
+                            switch (match2.Groups[4].Value)
+                            {
+                                case ("stop"):
+                                    isEndStop = true;
+                                    break;
+
+                                case ("transit"):
+                                    isEndStop = false;
+                                    break;
+
+                                default:
+                                    throw new RouteException("Unexpected value: " + match2.Groups[4].Value);
+                            }
 
                             if (!locations.Contains(startLocation)) 
                             {
@@ -103,11 +130,12 @@ namespace RouteRequirements
                         {
                             File.AppendAllText(logFilePath, $"Warning: Line did not match any pattern - {line}");
                         }
+                    
                     }
-                    catch (RouteException ex)
-                    {
-                        File.AppendAllText(logFilePath, ex.Message + Environment.NewLine);
-                    }
+                }
+                catch (RouteException ex)
+                {
+                    File.AppendAllText(logFilePath, ex.Message);
                 }
 
                 XRoute route = BuildRoute(locations, stops, distances);

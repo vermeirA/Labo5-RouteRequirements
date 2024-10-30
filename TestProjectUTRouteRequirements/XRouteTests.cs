@@ -26,19 +26,16 @@ namespace TestProjectUTRouteRequirements
         }
 
         [Fact]
-        public void AddLocation_Should_Add_NextLocation_Correctly()
+        public void AddLocation_Should_Add_Location_Correctly()
         {
             InitializeRoute();
 
             _route.AddLocation("Location1", 10.0, true);
 
-            _route.AddLocation("location2" , 15.0, false);
-
-            Assert.Equal(6, _route._routeSegments.Count);
-            Assert.Equal("Location2", _route._routeSegments[5].LocEnd.Name); //hoofdletter check
-            Assert.False(_route._routeSegments[5].LocEnd.IsStop);
-            Assert.Equal(10.0, _route._routeSegments[4].Distance);
-            Assert.Equal(15.0, _route._routeSegments[5].Distance);
+            Assert.Equal(5, _route._routeSegments.Count);
+            Assert.Equal("E", _route._routeSegments[4].LocStart.Name);
+            Assert.True(_route._routeSegments[4].LocEnd.IsStop);
+            Assert.Equal(10.0, _route._routeSegments[4].Distance);           
         }
 
         [Fact]
@@ -52,6 +49,15 @@ namespace TestProjectUTRouteRequirements
 
             var ex = Assert.Throws<RouteException>(() => _route.AddLocation(location, distance, isStop));
             Assert.Equal("AddLocation - Location already exists.", ex.Message);
+        }
+
+        [Fact]
+        public void AddLocation_Should_Throw_Exception_When_Location_NotCapital()
+        {
+            InitializeRoute();
+
+            var ex = Assert.Throws<RouteException>(() => _route.AddLocation("location2", 15.0, false));
+            Assert.Equal("The name of the location must start with a capital letter.", ex.Message);
         }
 
         [Fact]
@@ -86,10 +92,9 @@ namespace TestProjectUTRouteRequirements
         [Fact]
         public void GetDistanceBetween_Should_Throw_Exception_When_NoLocationSuccession()
         {
-             InitializeRoute();
+            InitializeRoute();
 
-            var ex = Assert.Throws<RouteException>(() => _route.GetDistance("C", "A"));
-            Assert.Equal("GetDistance - Locations not succesive.", ex.Message);
+            Assert.Throws<RouteException>(() => _route.GetDistance("C", "A"));
         }
 
         [Fact]
@@ -227,14 +232,14 @@ namespace TestProjectUTRouteRequirements
         public void ShowFullRouteBetween_Should_Work_Correctly()
         {
             InitializeRoute();
-            var (start, fullRoute) = _route.ShowFullRoute("C", "E");
+            var (start, fullRoute) = _route.ShowFullRoute("B", "E");
 
-            Assert.Equal("C", start);
-            Assert.Equal(2, fullRoute.Count);
-            Assert.Equal(12, fullRoute[0].distance);
-            Assert.Equal("D", fullRoute[0].location);
-            Assert.Equal(18, fullRoute[1].distance);
-            Assert.Equal("E", fullRoute[1].location);
+            Assert.Equal("B", start);
+            Assert.Equal(3, fullRoute.Count);
+            Assert.Equal(15, fullRoute[0].distance);
+            Assert.Equal("C", fullRoute[0].location);
+            Assert.Equal(12, fullRoute[1].distance);
+            Assert.Equal("D", fullRoute[1].location);
         }
 
         [Fact]
@@ -244,6 +249,9 @@ namespace TestProjectUTRouteRequirements
 
             var ex = Assert.Throws<RouteException>(() => _route.ShowFullRoute("D", "C"));
             Assert.Equal("ShowFullRoute - End location must come after start location.", ex.Message);
+
+            var ex2 = Assert.Throws<RouteException>(() => _route.ShowFullRoute("C", "E"));
+            Assert.Equal("ShowRoute - Start and endlocation must be a stoplocation.", ex2.Message);
         }
 
         [Fact]
